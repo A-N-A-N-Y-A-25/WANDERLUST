@@ -11,25 +11,24 @@ module.exports.renderNewForm= ( req,res)=>{
 };
 
 module.exports.createListing= async (req,res,next)=>{
-  let result= listingSchema.validate(req.body);
-  console.log(result);
-  if(result.error)
-  {
-    throw new ExpressError(400,result.error);
-  }
+  let url=req.file.path;
+  let filename=req.file.filename;
+
   //  let {title,desc,price,location,country,image}=req.body;
-  const newlisting=new Listing(req.body.listing);/*in this method of accessing values,
-        we have created  object of values in new.ejs */
-  newlisting.owner=req.user._id;
+ 
+  const newListing=new Listing(req.body.listing);/*in this method of accessing values,
+  //       we have created  object of values in new.ejs */
+  newListing.owner=req.user._id;
+  newListing.image={url,filename};
 // 1st way to schema validation
     // if(!newlisting.price)
     //   {
     //     throw new ExpressError(400,"price is missing");
     //   }
 
-    //2nd way : using joi-line 54
+//2nd way : using joi-line 54
 
-await newlisting.save();
+await newListing.save();
 req.flash("success","New Listing Created!");
 res.redirect("/listings");
        //  console.log(listing);
