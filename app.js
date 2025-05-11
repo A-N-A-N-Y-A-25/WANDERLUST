@@ -11,6 +11,7 @@ const methodOverride=require("method-override");
 const ejsMate=require("ejs-mate");
 const ExpressError=require("./utils/ExpressError.js");
 const session=require("express-session");
+const MongoStore= require("connect-mongo");
 const flash=require("connect-flash");
 const passport=require("passport");
 const LocalStrategy=require("passport-local");
@@ -27,6 +28,8 @@ app.set("views",path.join(__dirname,"views"));
 app.use(express.urlencoded({extended:true}));
 app.use(express.static(path.join(__dirname,"/public")));
 
+const dbUrl= process.env.ATLASDB_URL;
+
 main().then(()=>{
     console.log("Connected to DB");
     })
@@ -34,11 +37,24 @@ main().then(()=>{
         console.log(err);
     });
 async function main() {
-  await mongoose.connect('mongodb://127.0.0.1:27017/wander_lust');
+  await mongoose.connect(dbUrl);
 }
 
+const store= MongoStore.create({
+  mongoUrl : dbUrl,
+  crypto:{
+    secret: process.env.SECRET,
+  },
+  touchAfter:24*3600,
+});
+
+store.on("error",()=>{
+  console.log("ERROR ON MONGO SESSION STORE", err);
+})
+
 const sessionOptions= {
-  secret: "mysupersecretcode",
+  store,
+  secret: process.env.SECRET,
   resave:false,
   saveUninitialized: true,
   cookie:{
@@ -48,9 +64,11 @@ const sessionOptions= {
   },
 };
 
-app.get("/",(req,res)=>{
-  res.send("Hi,I m root!");
-}); 
+// app.get("/",(req,res)=>{
+//   res.send("Hi,I m root!");
+// }); 
+
+
 
 app.use(session(sessionOptions));
 app.use(flash());
